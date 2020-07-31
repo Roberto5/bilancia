@@ -77,14 +77,11 @@ interface readerHandelr {
 
 class debugReader implements readerHandelr {
     function read() {
-        $output=null;
-        $return=null;
-        exec('./random.sh',$output,$return);
-        
-        if (($return<0)||!is_numeric($output[0])) {
-            $result=array('message'=>'error '.print_r($output,true),'weight'=>0);
+        $input=file_get_contents('debugWeight.txt');
+        if (!$input) {
+            $result=array('message'=>'error "'.print_r($input,true).'"','weight'=>0);
         }
-        else $result=array('message'=>'','weight'=>$output[0]);
+        else $result=array('message'=>'','weight'=>$input);
         return $result;
     }
 }
