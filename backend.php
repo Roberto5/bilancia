@@ -10,9 +10,9 @@ if (isset($_GET['setZero'])&& $_GET['setZero']) {
 if (isset($_GET['history']) && $_GET['history']) {
     $option['history']=true;
 }
-echo 'option';
-print_r($option);
-echo'<br>';
+//echo 'option';
+//print_r($option);
+//echo'<br>';
 $reader=new handler($handler,$option);
 
 echo json_encode($reader->read());

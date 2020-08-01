@@ -14,7 +14,7 @@ class handler {
         else $this->reader=new debugReader();
         
         $conf=$this->readConf();
-        print_r($conf);
+        //sprint_r($conf);
         $write=false;
         
         $default=array(
@@ -60,7 +60,12 @@ class handler {
         if ($this->buffer) $result=$this->buffer;
         else {
             $result=$this->reader->read();
+            if (is_numeric($result['weight']))
             $result['weight']-=$this->zero;
+            else {
+                $result['weight']=0;
+                $result['message'].=' il peso letto non è un numero';
+            }
         }
         return $result;
     }
