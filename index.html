@@ -1,9 +1,10 @@
 <html>
 	<head>
 		<link rel="stylesheet" href="css/main.css" type="text/css" />
-		<!-- <link rel="stylesheet" href="css/jquery-ui.min.css" type="text/css" />-->
+		<link rel="stylesheet" href="css/jquery-ui.min.css" type="text/css" />
 		<script type="text/javascript" src="js/jquery-3.5.1.min.js"></script>
-		<!-- <script type="text/javascript" src="js/jquery-ui.min.js"></script> -->
+		<!-- usare una versione più snella di jqeryui -->
+		 <script type="text/javascript" src="js/jquery-ui.min.js"></script> 
 		<script type="text/javascript" src="js/main.js"></script>
 		
 		
@@ -11,15 +12,29 @@
 	<body>
 		<div id="content">
 			<div id="operator">
-				<div id="op1" class="opButton enabled" onclick="m.operator(1);">Operatore 1</div>
-				<div id="op2" class="opButton" onclick="m.operator(2);">Operatore 2</div>
-				<div id="add" class="addButton">+</div>
+				<div id="op1" class="button enabled" onclick="m.operator(1);">Operatore 1</div>
+				<div id="op2" class="button" onclick="m.operator(2);">Operatore 2</div>
+				<div id="addop" class="button">+</div>
 			</div>
-			<div style="margin-left: 20%;">
+			<div style="margin-left: 20px;width:50%;display:inline-block">
 			<div id="weight" >0</div>
 			<div id="message"></div>
+			<div id="subtotal">0</div>
+			</div>
+			<div id="products">
+				<input id="price" type="number" step="0.1" size="4" value="0" onChange="this.stepUp();this.stepDown();m.refresh();"/>
+				<div class="button" onClick="m.editProd();">edit</div>
+				<div id="selprod"></div>
+				<div>
+					<div id="addprod" class="button" onClick="m.addProd();">+</div>
+					<span></span>
+				</div>
 			</div>
 		</div>
-		<div id="dialog">ciao</div>
+		<div id="addProductDialog">
+		<div><input id="name" type="text" placeholder="nome" /></div>
+		<div><input id="P-price" type="number" step="0.1" size="4" placeholder="prezzo" /></div>
+		<div><input id="cat" placeholder="categoria" /></div>
+		</div>
 	</body>
 </html>
