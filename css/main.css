@@ -4,14 +4,56 @@
 	min-height: 95%;
     min-width: 95%;
 }
+#operator{
+	margin-bottom:20px;
+}
+#displayInfo {
+	vertical-align: top;
+	display:inline-block;
+}
+#display1 {
+	vertical-align: top;
+	margin: 0px 30px;
+	display:inline-block;
+}
+#subtotal {
+	text-align:right;
+	display: inline-block;
+	
+}
+#price{
+	background-repeat: no-repeat;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' height='16px' width='200px'><text x='150' y='13' fill='black' font-size='12' font-family='arial'>\20AC</text></svg>");
+}
+#subtotal:after{
+	content: ' \20AC';
+}
+#tot {
+	text-align: right;
+}
+#tot:after{
+	content: ' \20AC';
+}
+td:last-child:after,td:nth-last-child(2):after {
+	content: ' \20AC';
+}
+td:nth-child(2):after {
+	content: ' kg';
+}
 #products {
 	display:inline-block;
-	max-width: 40%;
+	width: 500px;
+    right: 10px;
+    position: relative;
+    float: right;
 }
 #products div:not(.button):not(#selprod) {
 	border: 1px solid black;
 	border-radius:5px;
 	padding:5px;
+}
+#products span {
+	display: block;
 }
 #weight {
 	font-size:150px;
@@ -22,4 +64,11 @@
 .category {
 	display: inline-block;
     margin: 3px;
+}
+table {
+	text-align: right;
+}
+#count {
+	
+	display:inline-block;
 }

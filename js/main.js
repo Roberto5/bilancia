@@ -7,6 +7,7 @@ class main {
 	messageDisplay=null;
 	subTotDisplay=null;
 	init=true;
+	count=[];
 	constructor() {
 		this.weightDisplay=$('#weight');
 		this.messageDisplay=$('#message');
@@ -14,14 +15,49 @@ class main {
 		this.weightDisplay.on('click',function(){m.refresh();});
 		this.refresh();
 	}
+	addCount(type) {
+		if (type=='w') {
+			var name=this.selProduct!=-1 ? this.products[this.selProduct].name : '';
+			
+			var data={ 
+				name:name,
+				W:parseFloat(this.weightDisplay.text()),
+				price:$('#price').val(),
+				tot:this.subTotDisplay.text()
+			};
+			this.count.push(data);
+			this.refresh();
+		}
+		
+	}
 	updateW(data) {
 		m.weightDisplay.text(data.weight+" KG");
 		m.messageDisplay.text(data.message);
-		m.subTotDisplay.html((data.weight*$('#price').val())+' &euro;');
+		if (m.subTotDisplay.parent().contents()[0].id==undefined) {
+			m.subTotDisplay.parent().contents().eq(0).remove();
+		}
+		m.subTotDisplay.before(this.selProduct!=-1 ? this.products[this.selProduct].name+' ' : '')
+			.text(Math.round(data.weight*$('#price').val()*100)/100);
+		var t=$('table')[0];
+		while (t.rows.length>1)
+			t.deleteRow(1);
+		var tot=0;
+		for (let i=0;i<this.count.length;i++) {
+			let r=t.insertRow();
+			var j=0;
+			tot+=this.count[i].tot*1;
+			for (let k in this.count[i]) {
+				r.insertCell(j);
+				r.cells[j].textContent=this.count[i][k];
 				
+				j++;
+			}
+				
+		}
+		$('#tot span').text(tot);
+		//r=t.rows.
 	}
 	refresh(option={}) {
-		
 		$.ajax({
 			url:"backend.php",
 			dataType:'json',
@@ -134,7 +170,7 @@ class main {
 		}
 		var html='';
 		for (var cat in temp) {
-			html+='<div class="category">';
+			html+='<div class="category">'+ (cat=='none'? '':'<span>'+cat+'</span>');
 			for (var i in temp[cat])
 				html+='<div class="button products ui-widget ui-button ui-corner-all" id="prod'+temp[cat][i].id+'">'+temp[cat][i].name+'</div>';
 			html+='</div>';
