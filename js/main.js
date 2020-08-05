@@ -7,12 +7,15 @@ class main {
 	messageDisplay=null;
 	subTotDisplay=null;
 	init=true;
-	count=[];
+	count=null;
+	history=null;
 	constructor() {
 		this.weightDisplay=$('#weight');
 		this.messageDisplay=$('#message');
 		this.subTotDisplay=$('#subtotal');
 		this.weightDisplay.on('click',function(){m.refresh();});
+		this.history=new History();
+		this.count=new count(this.history,this.selectedOp);
 		this.refresh();
 	}
 	addCount(type) {
@@ -25,7 +28,7 @@ class main {
 				price:$('#price').val(),
 				tot:this.subTotDisplay.text()
 			};
-			this.count.push(data);
+			this.count.add(data);
 			this.refresh();
 		}
 		
@@ -38,24 +41,8 @@ class main {
 		}
 		m.subTotDisplay.before(this.selProduct!=-1 ? this.products[this.selProduct].name+' ' : '')
 			.text(Math.round(data.weight*$('#price').val()*100)/100);
-		var t=$('table')[0];
-		while (t.rows.length>1)
-			t.deleteRow(1);
-		var tot=0;
-		for (let i=0;i<this.count.length;i++) {
-			let r=t.insertRow();
-			var j=0;
-			tot+=this.count[i].tot*1;
-			for (let k in this.count[i]) {
-				r.insertCell(j);
-				r.cells[j].textContent=this.count[i][k];
-				
-				j++;
-			}
-				
-		}
-		$('#tot span').text(tot);
-		//r=t.rows.
+		this.count.display();
+		this.history.display();
 	}
 	refresh(option={}) {
 		$.ajax({
@@ -204,11 +191,140 @@ class main {
 		this.refresh();
 		if (this.operators.includes(id)) {
 			this.selectedOp=id;
+			this.count.changeOperator(id);
 			$('#operator div').removeClass('enabled ui-state-active');
 			$('#op'+id).addClass('ui-state-active');
 			//@todo so something
 		}
 			
+	}
+}
+class count {
+	_data=[[],[]];
+	_current=[];
+	_operator=1;
+	_history=null;
+	_display=$('#count table')[0];
+	_tot=[0,0];
+	_totchange=[true,true];
+	constructor(history,op=1) {
+		if (history instanceof History) 
+			this._history=history;
+		else throw new ReferenceError("history must be a history instance");
+		this._operator=op;
+		this._current=this._data[this._operator];
+	}
+	get len() {
+		return this._current.length;
+	}
+	get tot() {
+		var tot=0;
+		if (this._totchange) {
+			for (let i=0;i<this._current.length;i++) {
+				tot+=this._current[i].tot*1;
+			}
+			this._tot[this._operator]=tot;
+			this._totchange[this._operator]=false;
+		}
+		else tot=this._tot[this._operator];
+		return tot;
+	}
+	changeOperator(op) {
+		this._operator=op;
+		this._current=this._data[this._operator];
+	}
+	add(item) {
+		this._current.push(item);
+		this._totchange[this._operator]=true;
+	}
+	remove(i) {
+		this._current.splice(i,1);
+		this._totchange[this._operator]=true;
+	}
+	set(data) {
+		this._current=data;
+	}
+	display() {
+		while (this._display.rows.length>1)
+			this._display.deleteRow(1);
+		for (let i=0;i<this._current.length;i++) {
+			let r=this._display.insertRow();
+			var j=0;
+			for (let k in this._current[i]) {
+				r.insertCell(j);
+				r.cells[j].textContent=this._current[i][k];
+				j++;
+			}
+		}
+		$('#tot span').text(this.tot);
+		let tr=$('#count tr');
+		tr.hover(function (){$(this).toggleClass('ui-state-hover')});
+		tr.on('click',function(){
+			let i=$(this)[0].rowIndex;
+			if ((i>0)&&confirm('cancellare la riga?')) {
+				m.count.remove(i-1);
+				m.count.display();
+			}
+		});
+	}
+	close() {
+		if (this.len>0) {
+			this._history.add({
+				date:new Date().getTime(),
+				operator:this._operator,
+				tot:this.tot,data:this._current
+			});
+		this._data[this._operator]=[];
+		this._current=[];
+		this._tot[this._operator]=0;
+		this._history.display();
+		this.display();
+		}
+		
+	}
+}
+class History {
+	_data=[];
+	_display=$('#history table')[0];
+	add(item) {
+		this._data.push(item);
+	}
+	remove(i) {
+		this._data.splice(i,1);
+	}
+	get(i) {
+		return this._data[i].data;
+	}
+	getAll() {
+		return this._data;
+	}
+	display(limit=10) {
+		while (this._display.rows.length>1)
+			this._display.deleteRow(1);
+		if (limit<0) limit=this._data.length;
+		for (let i=0;i<this._data.length && i<limit;i++) {
+			let r=this._display.insertRow();
+			var j=0;
+			for (let k in this._data[i]) {
+				let v;
+				if (k=='date') {
+					let d=new Date(this._data[i].date);
+					v=d.getDate()+'/'+(d.getMonth()+1)+' '+d.getHours()+':'+d.getMinutes();
+				}
+				else v=this._data[i][k];
+				if (k!='data') {
+					r.insertCell(j);
+					r.cells[j].textContent=v;
+				}
+				j++;
+			}
+		}
+		$('#history tr').on('click',function(){
+			let i=$(this)[0].rowIndex-1;
+			if ((m.count.len==0)||(confirm('cancellare il conto torrente?'))) {
+				m.count.set(m.history.get(i));
+			}
+ 		});
 	}
 }
 var m;
