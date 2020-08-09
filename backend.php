@@ -1,30 +1,38 @@
 <?php
 include 'handler.php';
 
+function clean_input($input) {
+    $output=null;
+    if (is_array($input)) {
+        foreach ($input as $key => $value) {
+            $output[$key]=clean_input($value);
+        }
+    }
+    else $output=htmlentities($input);
+    return $output;
+}
+
+
+function get($array,$key,$bool=false) {
+    if (isset($array[$key]) && $array[$key]) {
+        return $bool ? true : clean_input($array[$key]);
+    }
+        
+    else return false;
+}
+
 //debug mode
 $handler=null;//new debugReader();
-$option=array();
-if (isset($_GET['setZero'])&& $_GET['setZero']) {
-    $option['zero']=true;
-}
-if (isset($_GET['history']) && $_GET['history']) {
-    $option['history']=true;
-}
-if (isset($_POST['products'])&& is_array($_POST['products'])) {
-    foreach ($_POST['products'] as $key => $value) {
-        $option['products'][$key]=htmlentities($value);
-    }
-    
-}
-if (isset($_GET['add']) && $_GET['add']) {
-    $option['add']=true;
-}
-if (isset($_GET['edit']) && $_GET['edit']) {
-    $option['edit']=htmlentities($_GET['edit']);
-}
-if (isset($_GET['delete']) && $_GET['delete']) {
-    $option['delete']=htmlentities($_GET['delete']);
-}
+$option=array(
+    'zero'=>get($_GET,'setZero',true),
+    'getHistory'=>get($_GET,'getHistory',true),
+    'history'=>get($_POST,'history'),
+    'products'=>get($_POST, 'products'),
+    'add'=>get($_GET, 'add',true),
+    'edit'=>get($_GET, 'edit'),
+    'delete'=>get($_GET,'delete'),
+    'deleteHistory'=>get($_GET,'deleteHistory')
+);
 //echo 'option';
 //print_r($option);
 //echo'<br>';

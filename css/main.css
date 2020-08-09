@@ -25,27 +25,17 @@
 	background-repeat: no-repeat;
 	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' height='16px' width='200px'><text x='150' y='13' fill='black' font-size='12' font-family='arial'>\20AC</text></svg>");
 }
-#subtotal:after{
+
+.euro:after {
 	content: ' \20AC';
 }
-#tot {
-	text-align: right;
-}
-#tot:after{
-	content: ' \20AC';
-}
-td:last-child:after,#count td:nth-last-child(2):after {
-	content: ' \20AC';
-}
-#count td:nth-child(2):after {
+
+.kg:after {
 	content: ' kg';
 }
 #products {
 	display:inline-block;
-	width: 500px;
-    right: 10px;
-    position: relative;
-    float: right;
+    margin: 0px 50px;
 }
 #products div:not(.button):not(#selprod) {
 	border: 1px solid black;

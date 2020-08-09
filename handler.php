@@ -10,6 +10,7 @@ class handler {
     var $buffer=false;
     var $products=array();
     var $debug=[];
+    var $getHistory=false;
     function __construct($handler,$config=array()) {
         if ($handler instanceof readerHandelr)
             $this->reader=$handler;
@@ -22,11 +23,24 @@ class handler {
         $default=array(
             'zero'=>false,
             'history'=>false,
+            'getHistory'=>false,
             /*'products'=>array(),
             'edit'=>false,
             'add'=>false,
+            deleteHistory=>false,
             'delete'=>false*/
         );
+        if (array_key_exists('history', $config) && $config['history']) {
+            if (!array_key_exists('history', $conf))
+                $conf['history']=[];
+            //$this->debug[]=$conf['history'];
+            $conf['history'][]=$config['history'];
+            
+            
+            
+            $write=true;
+        }
+        $config['history']=$conf['history'];
         if (array_key_exists('products', $conf))
             $this->products=$conf['products'];
         if (array_key_exists('edit', $config)&& $config['edit']) {
@@ -51,10 +65,22 @@ class handler {
             $this->products=$temp;
             $write=true;
         }
+        if (array_key_exists('deleteHistory', $config)&& $config['deleteHistory']) {
+            $temp=array();
+            foreach ($config['history'] as $key => $value) {
+                $this->debug[]=$config['deleteHistory'];
+                $this->debug[]=$value;
+                if ($config['deleteHistory']!=$value['date']) $temp[]=$value;
+            }
+            $config['history']=$temp;
+            $conf['history']=$temp;
+            $this->debug[]=$config['history'];
+            $write=true;
+        }
         $conf['products']=$this->products;
         foreach ($default as $key => $value) {
             if (isset($config[$key])) {
-                echo $key;
+                //echo $key;
                 $value=$config[$key];
             }
             
@@ -101,6 +127,7 @@ class handler {
         }
         $result['products']=$this->products;
         $result['debug']=$this->debug;
+        if ($this->getHistory) $result['history']=$this->history;
         return $result;
     }
 }
@@ -117,7 +144,7 @@ interface readerHandelr {
 class debugReader implements readerHandelr {
     function read() {
         $input=file_get_contents('debugWeight.txt');
-        if (!$input) {
+        if ($input==false) {
             $result=array('message'=>'error "'.print_r($input,true).'"','weight'=>0);
         }
         else $result=array('message'=>'','weight'=>$input);

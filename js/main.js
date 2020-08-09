@@ -18,23 +18,39 @@ class main {
 		this.count=new count(this.history,this.selectedOp);
 		this.refresh();
 	}
-	addCount(type) {
+	addCount(type,n=0) {
+		let w;
 		if (type=='w') {
-			var name=this.selProduct!=-1 ? this.products[this.selProduct].name : '';
+			w=parseFloat(this.weightDisplay.text());
+		}
+		else {
+			w=n;
+		}
+		let price=$('#price').val()
+		var name=this.selProduct!=-1 ? this.products[this.selProduct].name : '';
 			
 			var data={ 
 				name:name,
-				W:parseFloat(this.weightDisplay.text()),
-				price:$('#price').val(),
-				tot:this.subTotDisplay.text()
+				W:w,
+				price:price,
+				tot:w*price,
+				type:type
 			};
 			this.count.add(data);
 			this.refresh();
-		}
-		
 	}
 	updateW(data) {
-		m.weightDisplay.text(data.weight+" KG");
+		let w=''
+		if (data.weight<10) w+='0'
+		w+=data.weight;
+		let i;
+		if ((i=w.indexOf('.'))>0) {
+			let nz=4-w.substr(i).length;
+			for (let a=0;a<nz;a++)
+			w+='0';
+		}
+		else w+='.000';
+		m.weightDisplay.text(w);
 		m.messageDisplay.text(data.message);
 		if (m.subTotDisplay.parent().contents()[0].id==undefined) {
 			m.subTotDisplay.parent().contents().eq(0).remove();
@@ -45,14 +61,24 @@ class main {
 		this.history.display();
 	}
 	refresh(option={}) {
+		var getopt='';
+		if (this.init) {
+			getopt='?getHistory=1';
+		}
 		$.ajax({
-			url:"backend.php",
+			url:"backend.php"+getopt,
 			dataType:'json',
 			data:option,
 			success:function(data) {
-				console.log('data',data);
+				//console.log('data',data);
 				m.updateW(data);
 				if (m.init) {
+					if (data.history!=null) {
+						for (let i in data.history) {
+							m.history.add(data.history[i],false);
+						}
+						m.history.display();
+					}
 					m.products=data.products;
 					m.displayProducts();
 					m.init=false;
@@ -157,12 +183,12 @@ class main {
 		}
 		var html='';
 		for (var cat in temp) {
-			html+='<div class="category">'+ (cat=='none'? '':'<span>'+cat+'</span>');
+			html+='<div class="category">'+ (cat=='none'? '<span>non categorizzati</span>':'<span>'+cat+'</span>');
 			for (var i in temp[cat])
 				html+='<div class="button products ui-widget ui-button ui-corner-all" id="prod'+temp[cat][i].id+'">'+temp[cat][i].name+'</div>';
 			html+='</div>';
 		}
-		console.log(html);
+		//console.log(html);
 		$('#products div span').html(html);
 		$('.products').removeClass('ui-state-active');
 		$('#prod'+this.selProduct).addClass('ui-state-active');
@@ -198,6 +224,15 @@ class main {
 		}
 			
 	}
+	zero(){
+		$.ajax({
+			url:'backend.php?setZero=1',
+			dataType:'json',
+			success:function(data) {
+				m.updateW(data);
+			}
+		});
+	}
 }
 class count {
 	_data=[[],[]];
@@ -231,6 +266,7 @@ class count {
 	}
 	changeOperator(op) {
 		this._operator=op;
+		if (this._data[this._operator]==null) this._data[this._operator]=[];
 		this._current=this._data[this._operator];
 	}
 	add(item) {
@@ -251,8 +287,13 @@ class count {
 			let r=this._display.insertRow();
 			var j=0;
 			for (let k in this._current[i]) {
-				r.insertCell(j);
-				r.cells[j].textContent=this._current[i][k];
+				if (k!='type') {
+					r.insertCell(j);
+					r.cells[j].textContent=this._current[i][k];
+					if ((k=='price')||(k=='tot')) r.cells[j].className='euro';
+					if ((k=='W')&&(this._current[i].type=='w')) r.cells[j].className='kg';
+				}
+				
 				j++;
 			}
 		}
@@ -272,7 +313,8 @@ class count {
 			this._history.add({
 				date:new Date().getTime(),
 				operator:this._operator,
-				tot:this.tot,data:this._current
+				tot:this.tot,
+				data:this._current.slice()
 			});
 		this._data[this._operator]=[];
 		this._current=[];
@@ -286,19 +328,41 @@ class count {
 class History {
 	_data=[];
 	_display=$('#history table')[0];
-	add(item) {
+	
+	get len() {
+		return this._data.length;
+	}
+	
+	add(item,save=true) {
 		this._data.push(item);
+		if (save) $.ajax({
+			url:'backend.php',
+			method:'post',
+			dataType:'json',
+			data:{history:item},
+			success:function(data) {
+				console.log('history add',data);
+			}
+		});
 	}
 	remove(i) {
+		let id=this._data[i].date;
 		this._data.splice(i,1);
+		$.ajax({
+			url:'backend.php?deleteHistory='+id,
+			dataType:'json',
+			success:function(data) {
+				console.log('history delete',data);
+			}
+		});
 	}
 	get(i) {
-		return this._data[i].data;
+		return this._data[i];
 	}
 	getAll() {
 		return this._data;
 	}
-	display(limit=10) {
+	display(limit=5) {
 		while (this._display.rows.length>1)
 			this._display.deleteRow(1);
 		if (limit<0) limit=this._data.length;
@@ -308,33 +372,56 @@ class History {
 			for (let k in this._data[i]) {
 				let v;
 				if (k=='date') {
-					let d=new Date(this._data[i].date);
+					let d=new Date(this._data[i].date*1);
 					v=d.getDate()+'/'+(d.getMonth()+1)+' '+d.getHours()+':'+d.getMinutes();
 				}
 				else v=this._data[i][k];
 				if (k!='data') {
 					r.insertCell(j);
 					r.cells[j].textContent=v;
+					if (k=='tot') r.cells[j].className='euro';
 				}
 				j++;
 			}
 		}
 		$('#history tr').on('click',function(){
-			let i=$(this)[0].rowIndex-1;
-			if ((m.count.len==0)||(confirm('cancellare il conto torrente?'))) {
-				m.count.set(m.history.get(i));
+			$('#historyDialog').dialog('open');
+			let index=$(this)[0].rowIndex-1;
+			$('#historyDialog').data('id',index);
+			let display=$('#historyDialog table')[0];
+			while (display.rows.length>1)
+				display.deleteRow(1);
+			let data=m.history.get(index);
+			for (let i=0;i<data.data.length;i++) {
+				let r=display.insertRow();
+				var j=0;
+				for (let k in data.data[i]) {
+					r.insertCell(j);
+					r.cells[j].textContent=data.data[i][k];
+					j++;
+				}
 			}
- 		});
+			let h=$('#historyDialog span');
+			let d=new Date(data.date*1);
+			let v=d.getDate()+'/'+(d.getMonth()+1)+' '+d.getHours()+':'+d.getMinutes();
+			h.eq(0).text(v);
+			h.eq(1).text(data.operator);
+			h.eq(2).text(data.tot);
+			/**/
+ 		}).hover(function (){$(this).toggleClass('ui-state-hover')});;
 	}
 }
 var m;
 $(function(){
 	m=new main();
-	$('.button').button();
+	$('.button:not(.ui-state-disabled)').button();
+	$('.button.ui-state-disabled').button({disabled: true});
+	
 	$('.enabled').addClass('ui-state-active');
 	$('#addProductDialog').dialog({autoOpen: false,buttons: {
 		Cancella: function() {
           $(this).dialog( "close" );
+
         },
         "Aggiungi": function(){
 			data={
@@ -347,4 +434,34 @@ $(function(){
 		}
         
       }});
+	$('#historyDialog').dialog({autoOpen: false,buttons: {
+		Cancella: function() {
+			let i=$(this).data('id');
+			m.history.remove(i);
+			m.refresh();
+            $(this).dialog( "close" );
+			
+        },
+        "edit": function(){
+			let i=$(this).data('id');
+			if ((m.count.len==0)||(confirm('cancellare il conto corrente?'))) {
+				m.count.set(m.history.get(i).data);
+				m.history.remove(i);
+			}
+			$(this).dialog( "close" );
+			m.refresh();
+		}
+        
+      }
+	});
+	$('#item').dialog({
+		autoOpen: false,
+		buttons: {
+			aggiungi: function (){
+				let n=$(this).find('input').val();
+				m.addCount('i',n);
+				$(this).dialog('close');
+			}
+		}
+	});
 });
