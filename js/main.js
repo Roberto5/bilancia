@@ -6,10 +6,12 @@ class main {
 	weightDisplay=null;
 	messageDisplay=null;
 	subTotDisplay=null;
+	totHistoryDisplay=null
 	init=true;
 	count=null;
 	history=null;
 	constructor() {
+		this.totHistoryDisplay=$('#totHistory');
 		this.weightDisplay=$('#weight');
 		this.messageDisplay=$('#message');
 		this.subTotDisplay=$('#subtotal');
@@ -17,6 +19,9 @@ class main {
 		this.history=new History();
 		this.count=new count(this.history,this.selectedOp);
 		this.refresh();
+	}
+	openTot() {
+		this.totHistoryDisplay.dialog('open');
 	}
 	addCount(type,n=0) {
 		let w;
@@ -464,4 +469,5 @@ $(function(){
 			}
 		}
 	});
+	$('#totHistory').dialog({autoOpen:false,modal: true,height:400,width:500});
 });
